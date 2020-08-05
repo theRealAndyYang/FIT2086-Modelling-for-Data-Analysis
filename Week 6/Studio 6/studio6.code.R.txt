@@ -1,0 +1,97 @@
+####################################################################################
+#	Script-file:   studio6_skel.R
+#	Project:       FIT2086 - Studio 6
+#
+# Purpose:  	   Solutions for questions in Studio 6
+####################################################################################
+
+# ----------------------------------------------------------------------------------
+# Question 3
+# ----------------------------------------------------------------------------------
+
+rm(list=ls())
+
+# 3.1
+df = read.csv("toydata.csv")
+plot(df$X, df$y, xlab="X", ylab="y")
+
+# 3.2
+lm(y~X,data=df)
+
+# 3.3
+fit = lm(y~X,data=df)
+summary(fit)
+
+# 3.4
+yhat = fit$coefficients[[1]] + fit$coefficients[[2]] * df$X
+yhat
+
+yhat = predict(fit, df)
+yhat
+lines(df$X, yhat, lwd=2)
+
+# 3.5
+fit2 = lm(y ~ X, data=df, subset=1:9)
+summary(fit2)
+
+# 3.6
+yhat2 = predict(fit2, df)
+lines(df$X, yhat2, lwd=2, col="red")
+
+# 3.7
+plot(df$X, df$y, xlab="X", ylab="y")
+yhat2 = predict(fit2, df, interval="confidence")
+lines(df$X, yhat2[,"fit"], col="red")
+lines(df$X, yhat2[,"lwr"], col="black")
+lines(df$X, yhat2[,"upr"], col="black")
+
+# ----------------------------------------------------------------------------------
+# Question 4
+# ----------------------------------------------------------------------------------
+
+# 4.1
+rm(list=ls())
+wine = read.csv("wine_train.csv")
+
+hist(wine$fixed.acidity)
+hist(wine$volatile.acidity)
+hist(wine$citric.acid)
+
+hist(wine$quality)
+
+# 4.2
+fit = lm(quality ~., wine)
+summary(fit)
+
+# 4.3
+plot(predict(fit,wine), wine$quality)
+
+# 4.4
+wine.test = read.csv("wine_test.csv")
+yhat_full = predict(fit, wine.test)
+mean((yhat_full - wine.test$quality)^2)
+
+# 4.5
+fit_aic = step(fit)
+summary(fit_aic)
+
+yhat_full_aic = predict(fit_aic, wine.test)
+mean((yhat_full_aic - wine.test$quality)^2)
+
+# 4.6
+summary(fit)
+summary(fit_aic)
+
+# 4.7
+fit_aic$coefficients
+
+# 4.8
+fit_bic = step(fit, k = log(length(wine$quality)))
+summary(fit_bic)
+
+yhat_full_bic = predict(fit_bic, wine.test)
+mean((yhat_full_bic - wine.test$quality)^2)
+
+# 4.9
+fit_wine.test = lm(quality ~ ., wine.test)
+summary(fit_wine.test)

@@ -1,0 +1,127 @@
+####################################################################################
+# Script-file:   studio1_solns.R
+# Project:       FIT2086 - Studio 1
+#
+# Purpose:       Solutions for questions in Studio 1
+####################################################################################
+
+# Q6.1 Implement a loop that prints out all the odd numbers from 1 to 15.
+# Solution 1:
+for (i in 1:15)
+{
+  if (i %% 2 == 1)
+  {
+    cat(i,"\n")
+  }
+}
+
+# Solution 2:
+for (i in seq(1,15,2))
+{
+  cat(i,"\n")
+}
+
+# Q6.2 Write a function that takes an argument n, calculates the factorial of n, and returns it.
+myfactorial <- function(n)
+{
+  # Error checking -- must be integer >= 0
+  if (n < 0 || floor(n) != n)
+  {
+    stop("n must be non-negative integer")
+  }
+  # Base-case
+  if (n == 0)
+  {
+    return(1)
+  }
+  else
+  {
+    return(n*myfactorial(n-1))
+  }
+}
+
+1*2*3*4
+myfactorial(4)
+
+# Q6.3
+findminmax <- function(x)
+{
+  # Error checking
+  if (!is.numeric(x) || !is.vector(x))
+  {
+    stop("Input must be a numeric vector")
+  }
+  
+  retval = list()
+  retval$min = Inf
+  retval$max = -Inf
+  for (i in 1:length(x))
+  {
+    if (x[i] < retval$min)
+    {
+      retval$min = x[i]
+    }
+    if (x[i] > retval$max)
+    {
+      retval$max = x[i]
+    }
+  }
+  
+  # compute the range
+  retval$rng = retval$max - retval$min
+  
+  
+  return(retval)
+}
+findminmax(c(4,3,10,33,-2,8))
+
+
+##################################################################################
+# Q8.3
+mush = read.csv("Mushroom.csv")
+
+## class vs cap.shape
+table(mush$class,mush$cap.shape)
+# having a bell shape seems to be associated with less poisonous varieties, having a knobbed shape
+# appears to be associated with more poisonous varieties
+
+## class vs cap.surface
+table(mush$class,mush$cap.surface)
+# some mild association between fibrous and the class, and being smooth and the class
+
+## class vs. cap.color
+table(mush$class,mush$cap.color)
+# again, some mild association as some categories (i.e. brown, gray) seem to lead to less poisonous 
+# varieties but others (buff, yellow) lead to more poisonous varieties
+
+## class vs. odor
+table(mush$class, mush$odor)
+# This variable seems very, very strong associated with class, as mushrooms are either (almost) all edible
+# or all poisonous depending on the type of odor. Knowing the odor would lead to a very good prediction
+# of the mushroom's class
+
+## class vs population
+table(mush$class, mush$population)
+# again, some reasonably strong changes in distribution associated with some of the categories
+
+## class vs habitat
+table(mush$class, mush$habitat)
+# some habitats quite predictive of class, for example, growing along paths or in urban areas
+# you would believe a mushroom to be poisonous, while growing in the meadows suggests
+# its much more likely to be edible
+
+# In general most of the variables show some association with class, but odor is
+# by far the strongest associated variable
+
+
+##################################################################################
+# Q9.1
+wine <- read.csv("wine.csv")
+wine_corr = c()
+for (i in 1:11)
+{
+  wine_corr[i] = cor(wine[,i], wine$quality)
+  cat("Correlation between", names(wine)[i], "and quality = ", wine_corr[i], "\n")
+}
+
+cat("Variable with maximum correlation is:", names(wine)[which.max(abs(wine_corr))], "\n")

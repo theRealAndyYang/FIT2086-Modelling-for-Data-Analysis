@@ -1,0 +1,219 @@
+####################################################################################
+#	Script-file:   studio8.code.R
+#	Project:       FIT2086 - Studio 8
+#
+# Purpose:  	   Code for questions in Studio 8
+####################################################################################
+
+
+# ----------------------------------------------------------------------------------
+# Question 2
+# ----------------------------------------------------------------------------------
+
+# 2.2
+n = 1
+sigma2 = 1
+
+mu = seq(from=-5, to=5, by=0.001)
+plot(c(-5,5), c(1,1)*sigma2/n, type="l", xlab="Population mean (mu)", ylab="MSE", ylim=c(0,5))
+
+c = 0.1
+lines(mu, (c/(n+c))^2*mu^2 + n*sigma2/(n+c)^2, col = "red")
+
+c = 1
+lines(mu, (c/(n+c))^2*mu^2 + n*sigma2/(n+c)^2, col = "green")
+
+c = 5
+lines(mu, (c/(n+c))^2*mu^2 + n*sigma2/(n+c)^2, col = "blue")
+
+
+# ----------------------------------------------------------------------------------
+# Question 3
+# ----------------------------------------------------------------------------------
+
+rm(list=ls())
+
+
+# ------------------------------------------------------------------------------------------------------
+# 3.1
+source("my.prediction.stats.R")
+
+gene.train = read.csv("gene.train.csv", header=T)
+gene.test = read.csv("gene.test.csv", header=T)
+fullmod=glm(Disease ~ ., data=gene.train, family=binomial)
+my.pred.stats(predict(fullmod, gene.test, type="response"), gene.test$Disease)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 3.2
+coefficients(summary(fullmod))
+pvalues = coefficients(summary(fullmod))[,4]
+pvalues < 0.05
+sum(pvalues < 0.05)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 3.4
+sum(pvalues < 0.05/100)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 3.5
+fit.ric = step(fullmod, direction="both", k=2*log(ncol(gene.train)-1))
+summary(fit.ric)
+my.pred.stats(predict(fit.ric, gene.test, type="response"), gene.test$Disease)
+
+
+
+# ----------------------------------------------------------------------------------
+# Question 4
+# ----------------------------------------------------------------------------------
+
+rm(list=ls())
+source("wrappers.R")
+source("my.prediction.stats.R")
+library(glmnet)
+
+pima.train = read.csv("pima.train.csv")
+pima.test = read.csv("pima.test.csv")
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.1
+lasso.fit = glmnet.f(DIABETES ~ ., pima.train, family="binomial", lambda = 0)
+my.pred.stats(predict.glmnet.f(lasso.fit, pima.test, type="response"), pima.test$DIABETES)
+
+coefficients(lasso.fit)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.2
+lasso.fit = glmnet.f(DIABETES ~ ., pima.train, family="binomial", lambda = 0.02)
+coefficients(lasso.fit)
+sum(coefficients(lasso.fit) != 0)
+
+lasso.fit = glmnet.f(DIABETES ~ ., pima.train, family="binomial", lambda = 0.03)
+coefficients(lasso.fit)
+sum(coefficients(lasso.fit) != 0)
+
+lasso.fit = glmnet.f(DIABETES ~ ., pima.train, family="binomial", lambda = 0.05)
+coefficients(lasso.fit)
+sum(coefficients(lasso.fit) != 0)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.3
+lasso.fit = glmnet.f(DIABETES ~ ., pima.train, family="binomial")
+plot(lasso.fit, "lambda", label=T)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.4
+lasso.fit = cv.glmnet.f(DIABETES ~ ., pima.train, family="binomial")
+plot(lasso.fit)
+min(lasso.fit$cvm)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.5
+coefficients(lasso.fit)
+my.pred.stats(predict.glmnet.f(lasso.fit, pima.test, type="response"), pima.test$DIABETES)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.6
+fit.bic = step(glm(DIABETES ~ .,pima.train,family="binomial"),k=log(668),direction="both")
+my.pred.stats(predict(fit.bic, pima.test, type="response"), pima.test$DIABETES)
+summary(fit.bic)
+coefficients(lasso.fit)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.7
+ridge.fit = glmnet.f(DIABETES ~ ., pima.train, family="binomial", lambda = 0.05, alpha=0)
+coefficients(ridge.fit)
+
+ridge.fit = glmnet.f(DIABETES ~ ., pima.train, family="binomial", lambda = 0.15, alpha=0)
+coefficients(ridge.fit)
+
+ridge.fit = glmnet.f(DIABETES ~ ., pima.train, family="binomial", lambda = 0.5, alpha=0)
+coefficients(ridge.fit)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.8
+ridge.fit = cv.glmnet.f(DIABETES ~ ., pima.train, family="binomial", alpha=0)
+plot(ridge.fit)
+
+coefficients(ridge.fit)
+my.pred.stats(predict.glmnet.f(ridge.fit, pima.test, type="response"), pima.test$DIABETES)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.9
+fullmod = glm(DIABETES ~ . , data=pima.train, family=binomial)
+my.pred.stats(predict(fullmod,pima.test,type="response"),pima.test$DIABETES)
+
+f = my.make.formula("DIABETES", pima.train, use.interactions=T, use.logs=T, use.squares=T, use.cubics=T)
+fullmod = glm(f, data=pima.train, family=binomial)
+(coefficients(fullmod))
+
+my.pred.stats(predict(fullmod,pima.test,type="response"),pima.test$DIABETES)
+
+ptm <- proc.time()
+forward.fit.bic = step(fullmod, direction="both", k=log(668), trace=0)
+proc.time() - ptm
+
+summary(forward.fit.bic)
+my.pred.stats(predict(forward.fit.bic,pima.test,type="response"),pima.test$DIABETES)
+
+# Fit the model using lasso + CV
+ptm <- proc.time()
+lasso.fit = cv.glmnet.f(f, data=pima.train, family="binomial", nfolds=25)
+proc.time() - ptm
+
+my.pred.stats(predict.glmnet.f(lasso.fit, pima.test, type="response"), pima.test$DIABETES)
+glmnet.tidy.coef(lasso.fit)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.10
+# (a) Swap training and testing data around
+pima.train = read.csv("pima.test.csv")
+pima.test = read.csv("pima.train.csv")
+
+# Just fit the original untransformed predictors, and see how well that does
+fullmod = glm(DIABETES ~ . , data=pima.train, family=binomial)
+my.pred.stats(predict(fullmod,pima.test,type="response"),pima.test$DIABETES)
+
+# (b) make a model include all interactions, logs, squares and cubics
+# Now we have only n=100 samples to fit to our 59 predictors
+f = my.make.formula("DIABETES", pima.train, use.interactions=T, use.logs=T, use.squares=T, use.cubics=T)
+fullmod = glm(f, data=pima.train, family=binomial)
+length(fullmod$coefficients)  # tells you how many predictors exist, after transformation
+my.pred.stats(predict(fullmod,pima.test,type="response"),pima.test$DIABETES)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.11
+# Compare to the model fitted by stepwise + BIC
+step.fit.bic = step(fullmod, direction="both", k=log(nrow(pima.train)), trace=0)
+summary(step.fit.bic)
+my.pred.stats(predict(step.fit.bic,pima.test,type="response"), pima.test$DIABETES)
+
+
+# ------------------------------------------------------------------------------------------------------
+# 4.12
+# Fit use lasso + CV
+lasso.fit = cv.glmnet.f(f, data=pima.train, family="binomial", nfolds=25)
+plot(lasso.fit)
+glmnet.tidy.coef(lasso.fit)
+my.pred.stats(predict.glmnet.f(lasso.fit, pima.test, type="response"), pima.test$DIABETES)
+
+
+# Fit using ridge + CV
+ridge.fit = cv.glmnet.f(f, data=pima.train, family="binomial", alpha=0)
+my.pred.stats(predict.glmnet.f(ridge.fit, pima.test, type="response"), pima.test$DIABETES)
+
+min(ridge.fit$cvm)
+min(lasso.fit$cvm)

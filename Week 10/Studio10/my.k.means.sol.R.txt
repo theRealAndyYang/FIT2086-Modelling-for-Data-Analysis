@@ -1,0 +1,48 @@
+my.k.means <- function(X, k)
+{
+  # Convert the dataframe to a matrix
+  X = as.matrix(X)
+  
+  q = ncol(X)
+  n = nrow(X)
+  
+  # Pre-allocate matrix for distances
+  d  = matrix(ncol = k, nrow = n)
+  
+  # Initial centroids
+  mu = X[sample(n)[1:k], ]
+  
+  # Cluster ...
+  for (i in 1:100)
+  {
+    # Calculate distances from each cluster to each point
+    for (j in 1:k)
+    {
+      d[,j] = rowSums(sweep(X,2,mu[j,])^2)
+    }
+    
+    # Assign points to cluster
+    w.cluster = max.col(-d)
+    
+    # Re-estimate centroid means
+    for (j in 1:k)
+    {
+      if (sum(w.cluster == j) > 1)
+      {
+        mu[j,] = colMeans( X[w.cluster==j,] )
+      }
+      else if (sum(w.cluster == j) == 1)
+      {
+        mu[j,] = X[w.cluster==j,]
+      }
+    }
+  }
+  
+  # Return values
+  rv = list()
+  rv$mu = mu
+  rv$w.cluster = w.cluster
+  rv$D = sum(apply(d,1,min))
+  
+  return(rv)
+}
